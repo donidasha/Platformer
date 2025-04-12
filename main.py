@@ -213,8 +213,8 @@ class Player(pg.sprite.Sprite):
         self.velocity_y = 0
         self.gravity = 2
         self.is_jumping = False
-        self.map_width = map_width * TILE_SCALE
-        self.map_height = map_height * TILE_SCALE
+        self.map_width = map_width
+        self.map_height = map_height
         
         self.timer = pg.time.get_ticks()
         self.interval = 200
@@ -379,7 +379,7 @@ class Game:
         self.all_sprites.add(self.player)
         # self.all_sprites.add(self.crab)
         
-        with open("maps/level1_enemies.json", "r") as json_file:
+        with open(f"maps/level{self.level}_enemies.json", "r") as json_file:
             data = json.load(json_file)
             
             for enemy in data["enemies"]:
@@ -481,7 +481,8 @@ class Game:
         hits = pg.sprite.spritecollide(self.player, self.portal, False)
         for hit in hits:
             self.level +=1
-            print(self.level)
+            if self.level == 3:
+                quit()
             self.setup()
         
     def draw(self):
