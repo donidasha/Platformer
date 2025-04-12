@@ -22,7 +22,7 @@ class Portal(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         
         self.rect.x = x
-        self.rect.y = y
+        self.rect.bottom = y
         
         self.current_image = 0
         self.interval = 100
@@ -47,6 +47,15 @@ class Portal(pg.sprite.Sprite):
             image = pg.transform.scale(image, (tile_size * tile_scale, tile_size * tile_scale))
             image = pg.transform.flip(image, False, True)
             self.images.append(image) 
+            
+    def update(self):
+        if pg.time.get_ticks() - self.timer > self.interval:
+            self.current_image += 1
+            if self.current_image >= len(self.images):
+                self.current_image = 0
+            self.image = self.images[self.current_image]
+            self.timer = pg.time.get_ticks()
+            
         
 class Coin(pg.sprite.Sprite):
     def __init__(self, x, y):
@@ -88,7 +97,7 @@ class Coin(pg.sprite.Sprite):
             if self.current_image >= len(self.images):
                 self.current_image = 0
             self.image = self.images[self.current_image]
-            self.timer = pg.time.get_ticks()            
+            self.timer = pg.time.get_ticks()   
         
         
     
@@ -356,8 +365,9 @@ class Game:
         self.enemies = pg.sprite.Group()
         self.balls = pg.sprite.Group()
         self.coins = pg.sprite.Group()
+        self.portal = pg.sprite.Group()
         
-        self.tmx_map = pytmx.load_pygame("maps/level1.tmx")
+        self.tmx_map = pytmx.load_pygame(f"maps/level{self.level}.tmx")
         
         self.map_pixel_width = self.tmx_map.width * self.tmx_map.tilewidth * TILE_SCALE
         self.map_pixel_height = self.tmx_map.height * self.tmx_map.tileheight * TILE_SCALE
@@ -403,6 +413,13 @@ class Game:
                         coin = Coin(x * self.tmx_map.tilewidth * TILE_SCALE, y * self.tmx_map.tileheight * TILE_SCALE)
                         self.coins.add(coin)
                         self.all_sprites.add(coin)
+            if layer.name == "portal":
+                for x, y, gid in layer:
+                    tile = self.tmx_map.get_tile_image_by_gid(gid)
+                    if tile:
+                        portal = Portal(x * self.tmx_map.tilewidth * TILE_SCALE, y * self.tmx_map.tileheight * TILE_SCALE)
+                        self.portal.add(portal)
+                        self.all_sprites.add(portal)
         self.camera_x = 0
         self.camera_y = 0
                         
@@ -458,8 +475,14 @@ class Game:
         hits = pg.sprite.spritecollide(self.player, self.coins, True)
         for hit in hits:
             self.collected_coins += 1
-            print(self.collected_coins)
-        
+            # print(self.collected_coins)
+            
+        self.portal.update()
+        hits = pg.sprite.spritecollide(self.player, self.portal, False)
+        for hit in hits:
+            self.level +=1
+            print(self.level)
+            self.setup()
         
     def draw(self):
         self.screen.blit(self.background, (0, 0))
